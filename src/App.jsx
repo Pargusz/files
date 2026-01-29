@@ -9,7 +9,7 @@ import './index.css';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/files">
       <Routes>
         {/* Public Routes */}
         <Route path="/:slug" element={<PublicBio />} />
