@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { db, auth } from '../../firebase/config';
+import { db, auth, storage } from '../../firebase/config';
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ArrowLeft, Save, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ArrowLeft, Save, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 
 const AdminEditor = () => {
     const { id } = useParams();
@@ -11,6 +12,8 @@ const AdminEditor = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(id ? true : false);
     const [saving, setSaving] = useState(false);
+
+    const [uploading, setUploading] = useState({ avatar: false, background: false });
 
     const [formData, setFormData] = useState({
         slug: '',
@@ -31,6 +34,30 @@ const AdminEditor = () => {
         });
         return () => unsubscribe();
     }, [id, navigate]);
+
+    const handleFileUpload = async (e, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(prev => ({ ...prev, [type]: true }));
+        try {
+            const fileName = `${Date.now()}_${file.name}`;
+            const fileRef = ref(storage, `bios/${user.uid}/${fileName}`);
+            const snapshot = await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+
+            if (type === 'avatar') {
+                setFormData(prev => ({ ...prev, profile: { ...prev.profile, avatar: url } }));
+            } else {
+                setFormData(prev => ({ ...prev, styles: { ...prev.styles, background: url } }));
+            }
+        } catch (err) {
+            console.error("Upload error:", err);
+            alert("Görsel yüklenirken bir hata oluştu.");
+        } finally {
+            setUploading(prev => ({ ...prev, [type]: false }));
+        }
+    };
 
     const fetchBio = async (bioId) => {
         try {
@@ -137,13 +164,27 @@ const AdminEditor = () => {
                             onChange={(e) => setFormData({ ...formData, profile: { ...formData.profile, bio: e.target.value } })}
                             style={{ ...inputStyle, minHeight: '80px' }}
                         />
-                        <input
-                            type="text"
-                            placeholder="Avatar URL (örn: https://...)"
-                            value={formData.profile?.avatar}
-                            onChange={(e) => setFormData({ ...formData, profile: { ...formData.profile, avatar: e.target.value } })}
-                            style={inputStyle}
-                        />
+                        <label style={labelStyle}>Profil Resmi / Avatar</label>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            <div style={{ position: 'relative', flex: 1 }}>
+                                <input
+                                    type="text"
+                                    placeholder="Avatar URL"
+                                    value={formData.profile?.avatar}
+                                    onChange={(e) => setFormData({ ...formData, profile: { ...formData.profile, avatar: e.target.value } })}
+                                    style={inputStyle}
+                                />
+                            </div>
+                            <label className="upload-btn" style={uploadBtnStyle}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => handleFileUpload(e, 'avatar')}
+                                    style={{ display: 'none' }}
+                                />
+                                {uploading.avatar ? '...' : <Upload size={18} />}
+                            </label>
+                        </div>
                     </div>
                 </section>
 
@@ -207,13 +248,25 @@ const AdminEditor = () => {
                     <h3>Görünüm Ayarları</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                         <div>
-                            <label style={labelStyle}>Arka Plan Görseli URL</label>
-                            <input
-                                type="text"
-                                value={formData.styles?.background}
-                                onChange={(e) => setFormData({ ...formData, styles: { ...formData.styles, background: e.target.value } })}
-                                style={inputStyle}
-                            />
+                            <label style={labelStyle}>Arka Plan Görseli</label>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <input
+                                    type="text"
+                                    value={formData.styles?.background}
+                                    onChange={(e) => setFormData({ ...formData, styles: { ...formData.styles, background: e.target.value } })}
+                                    style={inputStyle}
+                                    placeholder="Arka plan URL"
+                                />
+                                <label className="upload-btn" style={uploadBtnStyle}>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileUpload(e, 'background')}
+                                        style={{ display: 'none' }}
+                                    />
+                                    {uploading.background ? '...' : <Upload size={18} />}
+                                </label>
+                            </div>
                         </div>
                         <div>
                             <label style={labelStyle}>Buton Rengi</label>
@@ -282,6 +335,20 @@ const linkItemStyle = {
     background: 'rgba(255,255,255,0.02)',
     borderRadius: '14px',
     border: '1px solid rgba(255,255,255,0.05)'
+};
+
+const uploadBtnStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '12px',
+    borderRadius: '12px',
+    background: 'rgba(59, 130, 246, 0.1)',
+    color: '#3b82f6',
+    border: '1px solid rgba(59, 130, 246, 0.2)',
+    cursor: 'pointer',
+    width: '45px',
+    height: '45px'
 };
 
 export default AdminEditor;
