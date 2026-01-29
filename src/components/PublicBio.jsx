@@ -3,7 +3,11 @@ import { useParams } from 'react-router-dom';
 import { db } from '../firebase/config';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { motion } from 'framer-motion';
-import { Instagram, Twitter, Youtube, Github, Linkedin, Globe, MessageCircle } from 'lucide-react';
+import {
+    Instagram, Twitter, Youtube, Github, Linkedin, Globe, MessageCircle,
+    Music, Music2, Play, Send, Share2, Video, Ghost, ShoppingCart,
+    Twitch, ExternalLink, Headphones
+} from 'lucide-react';
 
 const PublicBio = () => {
     const { slug } = useParams();
@@ -54,6 +58,24 @@ const PublicBio = () => {
         }
     };
 
+    const getLinkIcon = (url) => {
+        const lowerUrl = url.toLowerCase();
+        if (lowerUrl.includes('instagram.com')) return <Instagram size={20} />;
+        if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return <Twitter size={20} />;
+        if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return <Youtube size={20} />;
+        if (lowerUrl.includes('spotify.com')) return <Music size={20} />;
+        if (lowerUrl.includes('music.apple.com')) return <Music2 size={20} />;
+        if (lowerUrl.includes('github.com')) return <Github size={20} />;
+        if (lowerUrl.includes('linkedin.com')) return <Linkedin size={20} />;
+        if (lowerUrl.includes('twitch.tv')) return <Twitch size={20} />;
+        if (lowerUrl.includes('tiktok.com')) return <Video size={20} />;
+        if (lowerUrl.includes('t.me') || lowerUrl.includes('telegram')) return <Send size={20} />;
+        if (lowerUrl.includes('snapchat.com')) return <Ghost size={20} />;
+        if (lowerUrl.includes('soundcloud.com')) return <Headphones size={20} />;
+
+        return <ExternalLink size={20} />;
+    };
+
     return (
         <div className="bio-container" style={{
             backgroundImage: styles?.background ? `url(${styles.background})` : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
@@ -98,7 +120,10 @@ const PublicBio = () => {
                                 borderColor: styles?.buttonBorderColor || 'rgba(255, 255, 255, 0.2)'
                             }}
                         >
-                            <span className="link-title">{link.title}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                {getLinkIcon(link.url)}
+                                <span className="link-title">{link.title}</span>
+                            </div>
                         </motion.a>
                     ))}
                 </div>

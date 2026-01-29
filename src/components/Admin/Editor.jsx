@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { db, auth } from '../../firebase/config';
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ArrowLeft, Save, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ArrowLeft, Save, Plus, Trash2, Image as ImageIcon, Upload, ChevronUp, ChevronDown } from 'lucide-react';
 
 const AdminEditor = () => {
     const { id } = useParams();
@@ -151,6 +152,17 @@ const AdminEditor = () => {
         setFormData({ ...formData, links: newLinks });
     };
 
+    const moveLink = (index, direction) => {
+        if ((direction === -1 && index === 0) || (direction === 1 && index === formData.links.length - 1)) return;
+
+        const newLinks = [...formData.links];
+        const temp = newLinks[index];
+        newLinks[index] = newLinks[index + direction];
+        newLinks[index + direction] = temp;
+
+        setFormData({ ...formData, links: newLinks });
+    };
+
     if (loading) return <div className="loading-screen">Yükleniyor...</div>;
 
     return (
@@ -249,6 +261,22 @@ const AdminEditor = () => {
                                 <button onClick={() => removeLink(index)} style={{ color: '#ff4d4d', background: 'none', border: 'none', cursor: 'pointer' }}>
                                     <Trash2 size={20} />
                                 </button>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <button
+                                        onClick={() => moveLink(index, -1)}
+                                        disabled={index === 0}
+                                        style={{ ...moveBtnStyle, opacity: index === 0 ? 0.3 : 1 }}
+                                    >
+                                        <ChevronUp size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => moveLink(index, 1)}
+                                        disabled={index === formData.links.length - 1}
+                                        style={{ ...moveBtnStyle, opacity: index === formData.links.length - 1 ? 0.3 : 1 }}
+                                    >
+                                        <ChevronDown size={16} />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -382,6 +410,18 @@ const uploadBtnStyle = {
     cursor: 'pointer',
     width: '45px',
     height: '45px'
+};
+
+const moveBtnStyle = {
+    background: 'rgba(255,255,255,0.05)',
+    border: 'none',
+    color: '#fff',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2px'
 };
 
 export default AdminEditor;
