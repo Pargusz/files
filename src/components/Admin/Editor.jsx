@@ -110,7 +110,7 @@ const AdminEditor = () => {
                 {/* URL Slug */}
                 <section style={sectionStyle}>
                     <h3>Özel URL</h3>
-                    <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '12px' }}>Sitenizin adresi şöyle olacak: example.com/{formData.slug || 'uzantı'}</p>
+                    <p style={{ opacity: 0.6, fontSize: '0.9rem', marginBottom: '12px' }}>Sitenizin adresi: pargusz.github.io/files/{formData.slug || 'uzantı'}</p>
                     <input
                         type="text"
                         placeholder="ozel-isim"

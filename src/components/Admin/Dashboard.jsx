@@ -83,9 +83,9 @@ const AdminDashboard = () => {
                             <Link to={`/admin/edit/${bio.id}`} style={actionBtnStyle} title="Düzenle">
                                 <Edit2 size={18} />
                             </Link>
-                            <a href={`/${bio.slug}`} target="_blank" rel="noreferrer" style={actionBtnStyle} title="Görüntüle">
+                            <Link to={`/${bio.slug}`} target="_blank" rel="noreferrer" style={actionBtnStyle} title="Görüntüle">
                                 <ExternalLink size={18} />
-                            </a>
+                            </Link>
                             <button onClick={() => handleDelete(bio.id)} style={{ ...actionBtnStyle, color: '#ff4d4d' }} title="Sil">
                                 <Trash2 size={18} />
                             </button>
