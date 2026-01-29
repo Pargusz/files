@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import PublicBio from './components/PublicBio';
 import AdminDashboard from './components/Admin/Dashboard';
 import AdminEditor from './components/Admin/Editor';
@@ -9,7 +9,7 @@ import './index.css';
 
 function App() {
   return (
-    <Router basename="/files">
+    <Router>
       <Routes>
         {/* Admin Routes (More specific, should come first or are matched better by RR6) */}
         <Route path="/admin/login" element={<Login />} />
