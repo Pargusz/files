@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { db, auth, storage } from '../../firebase/config';
+import { db, auth } from '../../firebase/config';
 import { doc, getDoc, setDoc, updateDoc, collection, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { ArrowLeft, Save, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
 
 const AdminEditor = () => {
@@ -39,24 +38,58 @@ const AdminEditor = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Dosya boyutu kontrolü (Sıkıştırma öncesi 5MB sınırı)
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Lütfen 5MB'dan küçük bir görsel seçin.");
+            return;
+        }
+
         setUploading(prev => ({ ...prev, [type]: true }));
         try {
-            const fileName = `${Date.now()}_${file.name}`;
-            const fileRef = ref(storage, `bios/${user.uid}/${fileName}`);
-            const snapshot = await uploadBytes(fileRef, file);
-            const url = await getDownloadURL(snapshot.ref);
+            const base64 = await compressAndEncode(file, type === 'avatar' ? 400 : 1200);
 
             if (type === 'avatar') {
-                setFormData(prev => ({ ...prev, profile: { ...prev.profile, avatar: url } }));
+                setFormData(prev => ({ ...prev, profile: { ...prev.profile, avatar: base64 } }));
             } else {
-                setFormData(prev => ({ ...prev, styles: { ...prev.styles, background: url } }));
+                setFormData(prev => ({ ...prev, styles: { ...prev.styles, background: base64 } }));
             }
         } catch (err) {
-            console.error("Upload error:", err);
-            alert("Görsel yüklenirken bir hata oluştu.");
+            console.error("Image processing error:", err);
+            alert("Görsel işlenirken bir hata oluştu.");
         } finally {
             setUploading(prev => ({ ...prev, [type]: false }));
         }
+    };
+
+    const compressAndEncode = (file, maxWidth) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height = (maxWidth / width) * height;
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Firestore limitlerine takılmamak için kaliteyi %60 tutuyoruz
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                };
+                img.onerror = reject;
+            };
+            reader.onerror = reject;
+        });
     };
 
     const fetchBio = async (bioId) => {
